@@ -9,9 +9,15 @@ Vagrant.configure("2") do |config|
   config.vm.network "public_network", auto_config: true, bridge: LAN_IF
 
   config.vm.provider "virtualbox" do |virtualbox|
-    # Ativando modo promíscuo
-    virtualbox.customize ["modifyvm", :id, "--nicpomisc2", "allow-all"]
-    virtualbox.memory = VB_RAM
+      # Enable promiscuous mode
+      virtualbox.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+      virtualbox.memory = VB_RAM
+   end
+  
+  config.vm.provider "virtualbox" do |vb|
+    vb.gui = true
+    vb.memory = "1024"
+  end
 
   config.vm.provision "shell", path: "install.sh"
 
