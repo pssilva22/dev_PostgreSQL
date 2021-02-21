@@ -36,16 +36,16 @@ verifica_db() {
     declare -g DATABASE_EXISTE
     export PGDIR="/etc/${POTSGRES_USER}"
     
-    if [ -s "${PG_DIR}/${PG_VERSAO}"];then
+    if [ -s "${PG_DIR}/${PG_VERSAO:0:2}"];then
         DATABASE_EXISTE="true"
     fi
 }
 
 # Altera variaveis padrão do POSTGRESQL
 altera_arquivo_config_pg() {
-    sed -i 's/ssl = on/ssl = off/g' ${PG_DIR}/${PG_VERSAO}/${CLUSTER_DB}/postgresql.conf 
-    sed -i 's/#listen_addresses = 'localhost'/listen_addresses = '*'/g' ${PG_DIR}/${PG_VERSAO}/${CLUSTER_DB}/postgresql.conf 
-    echo "host  all  all  0.0.0.0/0  md5" >> ${PG_DIR}/${PG_VERSAO}/${CLUSTER_DB}/pg_hba.conf
+    sed -i 's/ssl = on/ssl = off/g' ${PG_DIR}/${PG_VERSAO:0:2}/${CLUSTER_DB}/postgresql.conf 
+    sed -i 's/#listen_addresses = 'localhost'/listen_addresses = '*'/g' ${PG_DIR}/${PG_VERSAO:0:2}/${CLUSTER_DB}/postgresql.conf 
+    echo "host  all  all  0.0.0.0/0  md5" >> ${PG_DIR}/${PG_VERSAO:0:2}/${CLUSTER_DB}/pg_hba.conf
 }
 
 _main(){
