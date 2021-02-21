@@ -34,11 +34,18 @@ verifica_versao_db() {
 # Verifica se o diretório padrão do postgresql já existe
 verifica_db() {
     declare -g DATABASE_EXISTE
-    export PGDIR="/etc/postgresql"
+    export PGDIR="/etc/${POTSGRES_USER}"
     
     if [ -s "${PG_DIR}/${PG_VERSAO}"];then
         DATABASE_EXISTE="true"
     fi
+}
+
+# Altera variaveis padrão do POSTGRESQL
+altera_arquivo_config_pg() {
+    sed -i 's/ssl = on/ssl = off/g' ${PG_DIR}/${PG_VERSAO}/${CLUSTER_DB}/postgresql.conf 
+    sed -i 's/#listen_addresses = 'localhost'/listen_addresses = '*'/g' ${PG_DIR}/${PG_VERSAO}/${CLUSTER_DB}/postgresql.conf 
+    echo "host  all  all  0.0.0.0/0  md5" >> ${PG_DIR}/${PG_VERSAO}/${CLUSTER_DB}/pg_hba.conf
 }
 
 _main(){
@@ -46,12 +53,13 @@ _main(){
     verifica_db
     # Se o diretorio do BD nao existir
     if [ -z "${DATABASE_EXISTE}" ]; then 
+        mkdir /home/${POTSGRES_USER}
+        mkdir /home/${POTSGRES_USER}/BD
+
         sudo useradd -m ${POTSGRES_USER}
-        sudo passwd ${POTSGRES_USER}
         sudo usermod -a -G sudo ${POTSGRES_USER}
-        
-        mkdir /home/postgres
-        mkdir /home/postgres/BD
+        # Definindo diretorio padrao para o usuario postgres
+        sudo usermod -d /home/${POTSGRES_USER} ${POTSGRES_USER}
 
         su - ${POTSGRES_USER}
         
@@ -60,18 +68,18 @@ _main(){
         verifica_versao_db
         
         #Criando um cluster PostgreSQL
-        pg_createcluster -d /home/postgres/BD ${PG_VERSAO:0:2} ${CLUSTER_DB} --start
+        pg_createcluster -d /home/${POTSGRES_USER}/BD ${PG_VERSAO:0:2} ${CLUSTER_DB} --start
 
         # Configurando enderecos IP para a conexao ao Banco de Dados
-        echo "listen_addresses = '*'" >> ${PG_DIR}/${PG_VERSAO:0:2}/${CLUSTER_DB}/"postgresql.conf"
-        
+        altera_arquivo_config_pg
+
+        # Reiniciando o serviço
         service postgresql restart
 
-        # Incluindo pgadmin na inicialização do server
-        update-rc.d postgresql defaults
-        update-rc.d pgadmin4 defaults
-        postgresql &
-        pgadmin4 &
+        # Alterandoa a senha de acesso usuario ao BD
+        psql -c "ALTER USER ${POTSGRES_USER} PASSWORD 'postgres'"
+        
+        /usr/pgadmin4/bin/setup-web.sh
     fi
 }
 
