@@ -1,1 +1,1 @@
-# dev_PostgreSQL
+# vagrant-postgres
